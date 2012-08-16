@@ -4,3 +4,10 @@
 .settings/
 bin/
 build/
+
+src/main/webapp/static/css/all.css
+src/main/webapp/static/css/all-min.css
+src/main/webapp/static/css/all-min.css.gz
+src/main/webapp/static/js/all.js
+src/main/webapp/static/js/all-min.js
+src/main/webapp/static/js/all-min.js.gz
