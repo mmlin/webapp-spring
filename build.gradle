@@ -1,0 +1,110 @@
+
+/**
+ * Settings.
+ */
+ 
+def env = "dev"
+def staticDir = "src/main/webapp/static"
+def jsLibsDir = "${staticDir}/js/libs"
+
+
+/**
+ * Plugins.
+ */
+
+// Grab the plugin from a Maven Repo automatically
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.eriwen:gradle-css-plugin:1.1'
+        classpath 'com.eriwen:gradle-js-plugin:1.1'
+    }
+}
+
+apply plugin: 'war'
+apply plugin: 'jetty'
+apply plugin: 'groovy'
+apply plugin: 'eclipse' // Create eclipse project artifacts: `gradle eclipse`
+apply plugin: 'css'
+apply plugin: 'js'
+
+
+/**
+ * Tasks to combine, minify, and gzip CSS and JavaScript.
+ */
+ 
+css.source {
+	dev {
+		css {
+			srcDir "${staticDir}/css"
+			include "*.css"
+			exclude "all*"
+		}
+	}
+}
+
+combineCss {
+	source = css.source.dev.css.files
+	dest = "${staticDir}/css/all.css"
+}
+
+minifyCss {
+	source = combineCss
+	dest = "${staticDir}/css/all-min.css"
+}
+
+gzipCss {
+	source = minifyCss
+	dest = "${staticDir}/css/all-min.css.gz"
+}
+
+// Specify a collection of files to be combined, then minified and finally GZip compressed.
+task combinejs(type: com.eriwen.gradle.js.tasks.CombineJsTask) {
+    source = [
+    	"${staticDir}/js/libs/json2/json2.js",
+    	"${staticDir}/js/libs/jquery/jquery-1.8.0.js",
+    	"${staticDir}/js/libs/underscore/underscore.js",
+    	"${staticDir}/js/libs/backbone/backbone.js",
+    	"${staticDir}/js/libs/backbone-layout/backbone.layout.manager.js"
+    ]
+    dest = file("${staticDir}/js/all.js")
+}
+
+task minifyjs(type: com.eriwen.gradle.js.tasks.MinifyJsTask) {
+    source = combinejs
+    dest = file("${staticDir}/js/all-min.js")
+    closure {
+        warningLevel = 'QUIET'
+    }
+}
+
+task gzipjs(type: com.eriwen.gradle.js.tasks.GzipJsTask) {
+    source = minifyjs
+    dest = file("${staticDir}/js/all-min.js.gz")
+}
+
+
+/**
+ * Dependencies.
+ */
+ 
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile "org.springframework:spring-webmvc:3.1.0.RELEASE"
+	compile "javax.servlet:servlet-api:2.5"
+}
+
+jettyRun {
+	dependsOn << gzipCss
+	dependsOn << gzipjs
+}
+
+war {
+	dependsOn << gzipCss
+	dependsOn << gzipjs
+}
