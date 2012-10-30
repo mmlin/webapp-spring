@@ -1,4 +1,4 @@
-crm-spring
+webapp-spring
 ==========
 
 A web app using Spring, deployed on Jetty, built using Gradle.
